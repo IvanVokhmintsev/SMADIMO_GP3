@@ -1,8 +1,11 @@
 from langchain.agents import create_agent
 
 from dotenv import load_dotenv
+from PipelineMemory import PipelineMemory
 
 load_dotenv()
+
+memory = PipelineMemory()
 
 def get_weather(city: str) -> str:
     """Get weather for a given city."""
