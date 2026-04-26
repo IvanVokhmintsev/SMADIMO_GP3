@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="f6b43749-a912-489e-90e0-4f0c0d099903" name="Changes" comment="гп-3 ебанное говно">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
+    <list default="true" id="f6b43749-a912-489e-90e0-4f0c0d099903" name="Changes" comment="Init commit" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -38,7 +35,11 @@
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;polina&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
   <component name="RunManager">
@@ -55,6 +56,8 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="DEBUG_JUST_MY_CODE" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="RUN_TOOL" value="" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
       <option name="PARAMETERS" value="" />
@@ -74,7 +77,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-python-sdk-0978a7220b69-9867c7d4c0a4-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-253.28294.336" />
+        <option value="bundled-python-sdk-b63d5a1f7c97-b61e75351b1f-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-261.22158.340" />
       </set>
     </attachedChunks>
   </component>
@@ -85,6 +88,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1777209825344</updated>
+      <workItem from="1777224596720" duration="6565000" />
     </task>
     <task id="LOCAL-00001" summary="Init commit">
       <option name="closed" value="true" />
@@ -94,32 +98,11 @@
       <option name="project" value="LOCAL" />
       <updated>1777211281453</updated>
     </task>
-    <task id="LOCAL-00002" summary="added uv.lock">
-      <option name="closed" value="true" />
-      <created>1777214593387</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1777214593387</updated>
-    </task>
-    <task id="LOCAL-00003" summary="Added make_eda_tools.py and state logic">
-      <option name="closed" value="true" />
-      <created>1777222164369</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1777222164369</updated>
-    </task>
-    <task id="LOCAL-00004" summary="гп-3 ебанное говно">
-      <option name="closed" value="true" />
-      <created>1777222366714</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
-      <option name="project" value="LOCAL" />
-      <updated>1777222366714</updated>
-    </task>
-    <option name="localTasksCounter" value="5" />
+    <option name="localTasksCounter" value="2" />
     <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">
@@ -134,9 +117,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Init commit" />
-    <MESSAGE value="added uv.lock" />
-    <MESSAGE value="Added make_eda_tools.py and state logic" />
-    <MESSAGE value="гп-3 ебанное говно" />
-    <option name="LAST_COMMIT_MESSAGE" value="гп-3 ебанное говно" />
+    <option name="LAST_COMMIT_MESSAGE" value="Init commit" />
   </component>
 </project>

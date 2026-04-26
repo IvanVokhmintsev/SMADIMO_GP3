@@ -79,6 +79,84 @@ def make_eda_tools(state):
 
         state.df = df
         return state
+    @tool
+    def drop_missing_target_rows(target_col: str) -> dict:
+        """
+        Удаляет строки, где отсутствует значение целевой переменной.
+        """
+        if state.df is None:
+            return {
+                "status": "error",
+                "message": "DataFrame is empty"
+            }
+
+        if target_col not in state.df.columns:
+            return {
+                "status": "error",
+                "message": f"Target column '{target_col}' not found"
+            }
+
+        before_rows = len(state.df)
+
+        state.df = state.df.dropna(subset=[target_col])
+
+        after_rows = len(state.df)
+
+        return {
+            "status": "ok",
+            "target_col": target_col,
+            "dropped_rows": before_rows - after_rows,
+            "remaining_rows": after_rows
+        }
+
+    @tool
+    def drop_sparse_feature_rows(target_col: str, threshold: float = 0.95) -> dict:
+        """
+        Удаляет строки, где доля пропусков среди признаков больше или равна threshold.
+        Целевая переменная не учитывается при подсчете пропусков.
+        """
+        if state.df is None:
+            return {
+                "status": "error",
+                "message": "DataFrame is empty"
+            }
+
+        if not 0 <= threshold <= 1:
+            return {
+                "status": "error",
+                "message": "threshold must be between 0 and 1"
+            }
+
+        if target_col not in state.df.columns:
+            return {
+                "status": "error",
+                "message": f"Target column '{target_col}' not found"
+            }
+
+        feature_cols = [col for col in state.df.columns if col != target_col]
+
+        if not feature_cols:
+            return {
+                "status": "error",
+                "message": "No feature columns found"
+            }
+
+        before_rows = len(state.df)
+
+        missing_ratio = state.df[feature_cols].isnull().mean(axis=1)
+        rows_to_keep = missing_ratio < threshold
+
+        state.df = state.df.loc[rows_to_keep].copy()
+
+        after_rows = len(state.df)
+
+        return {
+            "status": "ok",
+            "target_col": target_col,
+            "threshold": threshold,
+            "dropped_rows": before_rows - after_rows,
+            "remaining_rows": after_rows
+        }
 
     @tool
     def eda_summary():
@@ -98,6 +176,8 @@ def make_eda_tools(state):
             "numeric_stats": df.describe().to_dict()
         }
 
-    return [drop_cols, analyze_missing, fill_missing, eda_summary]
+
+    return [drop_cols, analyze_missing, fill_missing,drop_missing_target_rows,
+            drop_sparse_feature_rows, eda_summary]
 
 
