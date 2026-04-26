@@ -2,7 +2,7 @@ from typing import List
 
 from langchain.tools import tool
 
-def make_eda_tool(state):
+def make_eda_tools(state):
 
     @tool
     def drop_cols(col_names: List[str]) -> dict:

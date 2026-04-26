@@ -2,10 +2,13 @@ from langchain.agents import create_agent
 
 from dotenv import load_dotenv
 from PipelineMemory import PipelineMemory
+from tools.make_eda_tools import make_eda_tools
 
 load_dotenv()
 
-memory = PipelineMemory()
+state = PipelineMemory()
+
+eda_tools = make_eda_tools(state)
 
 def get_weather(city: str) -> str:
     """Get weather for a given city."""
