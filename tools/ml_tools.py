@@ -1,3 +1,4 @@
+from functools import partial
 from typing import List
 
 from langchain.tools import tool
@@ -27,6 +28,7 @@ from tools.ml_models import (
 metrics_dict = {
     "mae": mean_absolute_error,
     "mse": mean_squared_error,
+    "rmse": partial(mean_squared_error, squared=False),
     "r2": r2_score,
     "accuracy": accuracy_score,
     "precision": precision_score,
@@ -36,6 +38,34 @@ metrics_dict = {
 }
 
 def make_ml_tools(state):
+
+    @tool
+    def get_column_names() -> dict:
+        """Return the names of all columns in the current dataset.
+
+        Provides the full list of DataFrame columns so the agent can
+        select target variables, choose features, detect identifiers,
+        or prepare preprocessing and modeling steps.
+
+        Returns:
+            Dictionary containing:
+            - status: success or error state
+            - column_count: total number of columns
+            - columns: list of column names
+        """
+        if state.df is None:
+            return {
+                "status": "error",
+                "message": "DataFrame is empty"
+            }
+
+        columns = list(state.df.columns)
+
+        return {
+            "status": "ok",
+            "column_count": len(columns),
+            "columns": columns
+        }
 
     @tool
     def get_model_catalog(task_type: str) -> dict:
@@ -205,4 +235,4 @@ def make_ml_tools(state):
         }
 
 
-    return [get_model_catalog, get_metric_catalog, train_and_evaluate_models]
+    return [get_model_catalog, get_metric_catalog, train_and_evaluate_models, get_column_names]

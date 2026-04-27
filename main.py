@@ -2,7 +2,7 @@ from langchain.agents import create_agent
 
 from dotenv import load_dotenv
 from PipelineMemory import PipelineMemory
-from prompts import AGENT_ONE_SYS_PROMPT, AGENT_TWO_SYS_PROMPT, AGENT_TWO_USER_PROMPT
+from prompts import AGENT_ONE_SYS_PROMPT, AGENT_TWO_SYS_PROMPT, AGENT_TWO_USER_PROMPT, AGENT_ONE_USER_PROMPT
 from tools.download_file import make_download_tools
 from tools.make_eda_tools import make_eda_tools
 from tools.make_fe_tools import make_fe_tools
@@ -29,12 +29,10 @@ ml_agent = create_agent(
     system_prompt=AGENT_TWO_SYS_PROMPT
 )
 
-URL = 'https://drive.usercontent.google.com/download?id=1LEwPH9AQw3q-x6HM_e9amRkB2tcnho_n&export=download&authuser=0'
 result = eda_agent.invoke(
     {"messages": [
         {"role": "user",
-         "content":
-             f"Скачай файл по данному url {URL} и сделай EDA. Датасет представляет из себя данные о зарплатах с LinkedIn. Мы хотели бы предиктить зарплату."}]}
+         "content": AGENT_ONE_USER_PROMPT}]}
 )
 
 
