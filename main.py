@@ -26,7 +26,7 @@ result = agent.invoke(
     {"messages": [
         {"role": "user",
          "content":
-             f"Скачай файл по данному url {URL} и сделай EDA"}]}
+             f"Скачай файл по данному url {URL} и сделай EDA. Датасет представляет из себя данные о зарплатах с LinkedIn. Мы хотели бы предиктить зарплату."}]}
 )
 
 print(result["messages"][-1].content_blocks)

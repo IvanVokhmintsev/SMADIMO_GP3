@@ -1,11 +1,128 @@
 from typing import List, Dict
 
+import pandas as pd
 from langchain.tools import tool
 
 
 
 
 def make_eda_tools(state):
+    @tool
+    def columns_description() -> dict:
+        """Return structured metadata about all dataset columns.
+
+        Provides column-level context so the agent can understand the role
+        of each feature and make decisions such as dropping identifiers,
+        selecting categorical columns, handling missing values, or creating
+        new features.
+
+        Returns:
+            Dictionary where each key is a column name and each value contains:
+            - dtype: pandas data type
+            - inferred_role: guessed semantic role
+              (id, numeric, categorical, boolean, datetime, text)
+            - missing_count: number of missing values
+            - missing_percent: percent of missing values
+            - unique_count: number of unique values
+            - unique_ratio: unique_count / rows
+            - top_values: most frequent values with counts
+            - sample_values: example values
+            - min / max / mean / median (for numeric columns)
+        """
+        df = state.df
+
+        if df is None:
+            return {
+                "status": "error",
+                "message": "DataFrame is empty"
+            }
+
+        result = {}
+        n_rows = len(df)
+
+        for col in df.columns:
+            s = df[col]
+
+            dtype = str(s.dtype)
+            missing_count = int(s.isna().sum())
+            missing_percent = round((missing_count / max(n_rows, 1)) * 100, 2)
+            unique_count = int(s.nunique(dropna=True))
+            unique_ratio = round(unique_count / max(n_rows, 1), 4)
+
+            top_values = (
+                s.value_counts(dropna=True)
+                .head(5)
+                .to_dict()
+            )
+
+            sample_values = (
+                s.dropna()
+                .astype(str)
+                .head(5)
+                .tolist()
+            )
+
+            # -------- role inference --------
+            role = "unknown"
+
+            lower_name = col.lower()
+
+            if "id" == lower_name or lower_name.endswith("_id") or lower_name.startswith("id_"):
+                role = "id"
+
+            elif pd.api.types.is_bool_dtype(s):
+                role = "boolean"
+
+            elif pd.api.types.is_datetime64_any_dtype(s):
+                role = "datetime"
+
+            elif pd.api.types.is_numeric_dtype(s):
+                if unique_count <= 2:
+                    role = "boolean"
+                else:
+                    role = "numeric"
+
+            elif dtype == "object":
+                avg_len = s.dropna().astype(str).str.len().mean() if not s.dropna().empty else 0
+
+                if unique_ratio > 0.9:
+                    role = "id"
+
+                elif avg_len > 25:
+                    role = "text"
+
+                else:
+                    role = "categorical"
+
+            else:
+                role = "categorical"
+
+            info = {
+                "dtype": dtype,
+                "inferred_role": role,
+                "missing_count": missing_count,
+                "missing_percent": missing_percent,
+                "unique_count": unique_count,
+                "unique_ratio": unique_ratio,
+                "top_values": top_values,
+                "sample_values": sample_values,
+            }
+
+            # -------- numeric stats --------
+            if pd.api.types.is_numeric_dtype(s):
+                info["min"] = float(s.min()) if not s.dropna().empty else None
+                info["max"] = float(s.max()) if not s.dropna().empty else None
+                info["mean"] = float(s.mean()) if not s.dropna().empty else None
+                info["median"] = float(s.median()) if not s.dropna().empty else None
+
+            result[col] = info
+
+        return {
+            "status": "ok",
+            "rows": n_rows,
+            "columns": len(df.columns),
+            "column_info": result
+        }
 
     @tool
     def drop_cols(col_names: List[str]) -> dict:
@@ -319,97 +436,6 @@ def make_eda_tools(state):
         }
 
     @tool
-    def decide_preprocessing_steps(target_col: str = None) -> dict:
-        """Decide preprocessing actions based on EDA results.
-
-        Returns a structured plan for missing values, duplicates, outliers,
-        high-missing columns, and target imbalance.
-        """
-        if state.df is None:
-            return {
-                "status": "error",
-                "message": "DataFrame is empty"
-            }
-
-        df = state.df
-        plan = {
-            "drop_columns": [],
-            "fill_missing": {},
-            "drop_duplicates": False,
-            "handle_outliers": {},
-            "target_strategy": None,
-            "notes": []
-        }
-
-        missing_percent = df.isnull().mean() * 100
-
-        for col, percent in missing_percent.items():
-            if percent > 50:
-                plan["drop_columns"].append(col)
-                plan["notes"].append(
-                    f"Column '{col}' has {percent:.2f}% missing values and should be considered for dropping."
-                )
-            elif percent > 0:
-                if col in df.select_dtypes(include="number").columns:
-                    plan["fill_missing"][col] = "median"
-                else:
-                    plan["fill_missing"][col] = "mode"
-
-                plan["notes"].append(
-                    f"Column '{col}' has {percent:.2f}% missing values and should be imputed."
-                )
-
-        duplicate_count = int(df.duplicated().sum())
-        if duplicate_count > 0:
-            plan["drop_duplicates"] = True
-            plan["notes"].append(
-                f"Dataset contains {duplicate_count} duplicate rows."
-            )
-
-        numeric_cols = df.select_dtypes(include="number").columns
-
-        for col in numeric_cols:
-            if col == target_col:
-                continue
-
-            q1 = df[col].quantile(0.25)
-            q3 = df[col].quantile(0.75)
-            iqr = q3 - q1
-
-            if iqr == 0:
-                continue
-
-            lower_bound = q1 - 1.5 * iqr
-            upper_bound = q3 + 1.5 * iqr
-
-            outlier_mask = (df[col] < lower_bound) | (df[col] > upper_bound)
-            outlier_percent = outlier_mask.mean() * 100
-
-            if outlier_percent > 0:
-                plan["handle_outliers"][col] = "cap"
-                plan["notes"].append(
-                    f"Column '{col}' has {outlier_percent:.2f}% possible outliers. Capping is recommended."
-                )
-
-        if target_col is not None:
-            if target_col not in df.columns:
-                plan["target_strategy"] = "target_not_found"
-            else:
-                target_distribution = df[target_col].value_counts(normalize=True, dropna=False) * 100
-
-                if not target_distribution.empty and target_distribution.max() > 70:
-                    plan["target_strategy"] = "imbalanced_classification"
-                    plan["notes"].append(
-                        f"Target column '{target_col}' appears imbalanced. Consider stratified split, class weights, oversampling, or undersampling."
-                    )
-                else:
-                    plan["target_strategy"] = "balanced_or_not_classification"
-
-        return {
-            "status": "ok",
-            "plan": plan
-        }
-    @tool
     def apply_preprocessing_plan(plan: Dict) -> dict:
         """Apply a preprocessing plan generated by decide_preprocessing_steps.
 
@@ -640,8 +666,7 @@ def make_eda_tools(state):
 
 
     return [drop_cols, analyze_missing, fill_missing, eda_summary, analyze_duplicates,
-            drop_duplicates, analyze_outliers, handle_outliers, analyze_target_balance,
-            decide_preprocessing_steps, apply_preprocessing_plan, generate_eda_report,
-            export_clean_dataset]
+            drop_duplicates, analyze_outliers, handle_outliers, analyze_target_balance, apply_preprocessing_plan, generate_eda_report,
+            export_clean_dataset, columns_description]
 
 
