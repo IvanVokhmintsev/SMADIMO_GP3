@@ -2,7 +2,7 @@ from langchain.agents import create_agent
 
 from dotenv import load_dotenv
 from PipelineMemory import PipelineMemory
-from prompts import AGENT_ONE_SYS_PROMPT, AGENT_TWO_SYS_PROMPT
+from prompts import AGENT_ONE_SYS_PROMPT, AGENT_TWO_SYS_PROMPT, AGENT_TWO_USER_PROMPT
 from tools.download_file import make_download_tools
 from tools.make_eda_tools import make_eda_tools
 from tools.make_fe_tools import make_fe_tools
@@ -47,5 +47,5 @@ result = ml_agent.invoke(
     {"messages": [
         {"role": "user",
          "content":
-             f"На основе датасета реши задачу регрессии для таргета  выбранным тобой способом. Выбери модели, которые лучше подойдут и потом выбери лучшую из них"}]}
+             AGENT_TWO_USER_PROMPT}]}
 )
