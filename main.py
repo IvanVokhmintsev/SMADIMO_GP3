@@ -3,6 +3,7 @@ from langchain.agents import create_agent
 from dotenv import load_dotenv
 from PipelineMemory import PipelineMemory
 from prompts import AGENT_ONE_SYS_PROMPT, AGENT_TWO_SYS_PROMPT, AGENT_TWO_USER_PROMPT, AGENT_ONE_USER_PROMPT
+from save_report_to_markdown import save_report_to_markdown
 from tools.download_file import make_download_tools
 from tools.make_eda_tools import make_eda_tools
 from tools.make_fe_tools import make_fe_tools
@@ -47,3 +48,5 @@ result = ml_agent.invoke(
          "content":
              AGENT_TWO_USER_PROMPT}]}
 )
+
+save_report_to_markdown(result["messages"][-1].text)
