@@ -10,6 +10,9 @@ from sklearn.metrics import (
     f1_score,
     roc_auc_score,
 )
+import os
+import joblib
+import time
 
 from ml_models import (
     MODEL_REGISTRY,
@@ -99,7 +102,7 @@ def make_ml_tools(state):
         """Train, save, and evaluate selected models on the dataset.
 
         Splits the dataset into train and test parts, trains the selected models,
-        saves trained models to state.models, and evaluates them using the
+        saves trained models to state.models and as .pkl files, and evaluates them using the
         chosen metrics.
 
         Args:
@@ -149,6 +152,8 @@ def make_ml_tools(state):
 
         results = {}
 
+        os.makedirs("saved_models", exist_ok=True)
+
         for model_name in model_names:
 
             if model_name not in MODEL_REGISTRY:
@@ -164,6 +169,8 @@ def make_ml_tools(state):
             model.fit(X_train, y_train)
 
             state.models[model_name] = model
+            model_path = f"saved_models/{model_name}_{int(time.time())}.pkl"
+            joblib.dump(model, model_path)
 
             y_pred = model.predict(X_test)
 
@@ -175,13 +182,10 @@ def make_ml_tools(state):
 
                     if metric == "mae":
                         model_result["mae"] = mean_absolute_error(y_test, y_pred)
-
                     elif metric == "mse":
                         model_result["mse"] = mean_squared_error(y_test, y_pred)
-
                     elif metric == "rmse":
                         model_result["rmse"] = mean_squared_error(y_test, y_pred) ** 0.5
-
                     elif metric == "r2":
                         model_result["r2"] = r2_score(y_test, y_pred)
 
@@ -189,7 +193,6 @@ def make_ml_tools(state):
 
                     if metric == "accuracy":
                         model_result["accuracy"] = accuracy_score(y_test, y_pred)
-
                     elif metric == "precision":
                         model_result["precision"] = precision_score(
                             y_test,
@@ -211,14 +214,23 @@ def make_ml_tools(state):
                             average="weighted"
                         )
 
+
+
                     elif metric == "roc_auc":
                         if hasattr(model, "predict_proba"):
-                            y_proba = model.predict_proba(X_test)[:, 1]
-                            model_result["roc_auc"] = roc_auc_score(y_test, y_proba)
+                            y_proba = model.predict_proba(X_test)
+                            if y_proba.shape[1] == 2:
+                                y_proba = y_proba[:, 1]
+                                model_result["roc_auc"] = roc_auc_score(y_test, y_proba)
+                            else:
+                                model_result["roc_auc"] = "not supported for multiclass classification"
+                        else:
+                            model_result["roc_auc"] = "not supported for this model"
 
             results[model_name] = {
                 "status": "ok",
-                "metrics": model_result
+                "metrics": model_result,
+                "model_path": model_path
             }
 
         return {
