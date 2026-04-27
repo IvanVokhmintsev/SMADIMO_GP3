@@ -618,7 +618,7 @@ def make_eda_tools(state):
         }
 
     @tool
-    def export_clean_dataset(path: str = "cleaned_dataset.csv") -> dict:
+    def export_clean_dataset(filename: str = "cleaned_dataset.csv") -> dict:
         """Export the current cleaned dataset to a CSV file.
 
         Saves the current state.df after EDA cleaning and preprocessing.
@@ -628,7 +628,7 @@ def make_eda_tools(state):
                 "status": "error",
                 "message": "DataFrame is empty"
             }
-
+        path = f'./data/{filename}'
         state.df.to_csv(path, index=False)
 
         return {
