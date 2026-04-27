@@ -291,7 +291,7 @@ def make_fe_tools(state):
                 "message": "DataFrame is empty"
             }
 
-        state.df.to_csv(path, index=False)
+        state.df.to_csv('./data/' + path, index=False)
 
         return {
             "status": "ok",

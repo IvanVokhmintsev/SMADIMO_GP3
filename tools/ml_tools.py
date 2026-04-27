@@ -1,3 +1,5 @@
+from typing import List
+
 from langchain.tools import tool
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
@@ -9,12 +11,13 @@ from sklearn.metrics import (
     recall_score,
     f1_score,
     roc_auc_score,
+    root_mean_squared_error
 )
 import os
 import joblib
 import time
 
-from ml_models import (
+from tools.ml_models import (
     MODEL_REGISTRY,
     REGRESSION_MODELS,
     CLASSIFICATION_MODELS,
@@ -22,7 +25,47 @@ from ml_models import (
     CLASSIFICATION_METRICS,
 )
 
+metrics_dict = {
+    "mae": mean_absolute_error,
+    "mse": mean_squared_error,
+    "rmse": root_mean_squared_error,
+    "r2": r2_score,
+    "accuracy": accuracy_score,
+    "precision": precision_score,
+    "recall": recall_score,
+    "f1": f1_score,
+    "roc_auc": roc_auc_score,
+}
+
 def make_ml_tools(state):
+
+    @tool
+    def get_column_names() -> dict:
+        """Return the names of all columns in the current dataset.
+
+        Provides the full list of DataFrame columns so the agent can
+        select target variables, choose features, detect identifiers,
+        or prepare preprocessing and modeling steps.
+
+        Returns:
+            Dictionary containing:
+            - status: success or error state
+            - column_count: total number of columns
+            - columns: list of column names
+        """
+        if state.df is None:
+            return {
+                "status": "error",
+                "message": "DataFrame is empty"
+            }
+
+        columns = list(state.df.columns)
+
+        return {
+            "status": "ok",
+            "column_count": len(columns),
+            "columns": columns
+        }
 
     @tool
     def get_model_catalog(task_type: str) -> dict:
@@ -94,8 +137,8 @@ def make_ml_tools(state):
     def train_and_evaluate_models(
         target_col: str,
         task_type: str,
-        model_names: list,
-        metric_names: list,
+        model_names: List[str],
+        metric_names: List[str],
         test_size: float = 0.2,
         random_state: int = 42
     ) -> dict:
@@ -177,55 +220,7 @@ def make_ml_tools(state):
             model_result = {}
 
             for metric in metric_names:
-
-                if task_type == "regression":
-
-                    if metric == "mae":
-                        model_result["mae"] = mean_absolute_error(y_test, y_pred)
-                    elif metric == "mse":
-                        model_result["mse"] = mean_squared_error(y_test, y_pred)
-                    elif metric == "rmse":
-                        model_result["rmse"] = mean_squared_error(y_test, y_pred) ** 0.5
-                    elif metric == "r2":
-                        model_result["r2"] = r2_score(y_test, y_pred)
-
-                elif task_type == "classification":
-
-                    if metric == "accuracy":
-                        model_result["accuracy"] = accuracy_score(y_test, y_pred)
-                    elif metric == "precision":
-                        model_result["precision"] = precision_score(
-                            y_test,
-                            y_pred,
-                            average="weighted"
-                        )
-
-                    elif metric == "recall":
-                        model_result["recall"] = recall_score(
-                            y_test,
-                            y_pred,
-                            average="weighted"
-                        )
-
-                    elif metric == "f1":
-                        model_result["f1"] = f1_score(
-                            y_test,
-                            y_pred,
-                            average="weighted"
-                        )
-
-
-
-                    elif metric == "roc_auc":
-                        if hasattr(model, "predict_proba"):
-                            y_proba = model.predict_proba(X_test)
-                            if y_proba.shape[1] == 2:
-                                y_proba = y_proba[:, 1]
-                                model_result["roc_auc"] = roc_auc_score(y_test, y_proba)
-                            else:
-                                model_result["roc_auc"] = "not supported for multiclass classification"
-                        else:
-                            model_result["roc_auc"] = "not supported for this model"
+                model_result[metric] = metrics_dict.get(metric)(y_test, y_pred)
 
             results[model_name] = {
                 "status": "ok",
@@ -240,4 +235,4 @@ def make_ml_tools(state):
         }
 
 
-    return [get_model_catalog, get_metric_catalog, train_and_evaluate_models]
+    return [get_model_catalog, get_metric_catalog, train_and_evaluate_models, get_column_names]

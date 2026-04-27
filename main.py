@@ -2,9 +2,12 @@ from langchain.agents import create_agent
 from langchain_google_genai import ChatGoogleGenerativeAI
 from dotenv import load_dotenv
 from PipelineMemory import PipelineMemory
-from prompts import AGENT_ONE_SYS_PROPMT
+from prompts import AGENT_ONE_SYS_PROMPT, AGENT_TWO_SYS_PROMPT, AGENT_TWO_USER_PROMPT, AGENT_ONE_USER_PROMPT
+from save_report_to_markdown import save_report_to_markdown
 from tools.download_file import make_download_tools
 from tools.make_eda_tools import make_eda_tools
+from tools.make_fe_tools import make_fe_tools
+from tools.ml_tools import make_ml_tools
 
 load_dotenv()
 
@@ -12,6 +15,8 @@ state = PipelineMemory()
 
 download_tools = make_download_tools(state)
 eda_tools = make_eda_tools(state)
+feature_tools = make_fe_tools(state)
+ml_tools = make_ml_tools(state)
 
 llm = ChatGoogleGenerativeAI(
     model = "google_genai:gemma-4-31b-it",
@@ -21,22 +26,36 @@ llm = ChatGoogleGenerativeAI(
     max_output_tokens = 20000,
 )
 
-agent = create_agent(
-    model = llm,
-    tools = download_tools + eda_tools,
-    system_prompt = AGENT_ONE_SYS_PROPMT
+
+eda_agent = create_agent(
+    model=llm,
+    tools=download_tools + eda_tools + feature_tools,
+    system_prompt=AGENT_ONE_SYS_PROMPT
 )
 
+ml_agent = create_agent(
+    model=llm,
+    tools=ml_tools,
+    system_prompt=AGENT_TWO_SYS_PROMPT
+)
 
-URL = 'https://drive.usercontent.google.com/download?id=1LEwPH9AQw3q-x6HM_e9amRkB2tcnho_n&export=download&authuser=0'
-result = agent.invoke(
+result = eda_agent.invoke(
     {"messages": [
         {"role": "user",
-         "content":
-             f"Скачай файл по данному url {URL} и сделай EDA. Датасет представляет из себя данные о зарплатах с LinkedIn. Мы хотели бы предиктить зарплату."}]}
+         "content": AGENT_ONE_USER_PROMPT}]}
 )
+
 
 print(result["messages"][-1].content_blocks)
 
 print(state.df.head())
 print(state.df.info())
+
+result = ml_agent.invoke(
+    {"messages": [
+        {"role": "user",
+         "content":
+             AGENT_TWO_USER_PROMPT}]}
+)
+
+save_report_to_markdown(result["messages"][-1].text)
