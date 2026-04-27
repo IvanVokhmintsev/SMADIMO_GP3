@@ -1,5 +1,5 @@
 from langchain.agents import create_agent
-
+from langchain_google_genai import ChatGoogleGenerativeAI
 from dotenv import load_dotenv
 from PipelineMemory import PipelineMemory
 from prompts import AGENT_ONE_SYS_PROPMT
@@ -13,11 +13,18 @@ state = PipelineMemory()
 download_tools = make_download_tools(state)
 eda_tools = make_eda_tools(state)
 
+llm = ChatGoogleGenerativeAI(
+    model = "google_genai:gemma-4-31b-it",
+    temperature = 0.0,
+    top_p = 0.9,
+    top_k = 40,
+    max_output_tokens = 20000,
+)
 
 agent = create_agent(
-    model="google_genai:gemma-4-31b-it",
-    tools=download_tools + eda_tools,
-    system_prompt=AGENT_ONE_SYS_PROPMT
+    model = llm,
+    tools = download_tools + eda_tools,
+    system_prompt = AGENT_ONE_SYS_PROPMT
 )
 
 

@@ -3,7 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="f6b43749-a912-489e-90e0-4f0c0d099903" name="Changes" comment="Апдейт с рабочим EDA">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tools/ml_tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/tools/ml_tools.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
