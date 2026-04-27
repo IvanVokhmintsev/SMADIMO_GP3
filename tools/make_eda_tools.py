@@ -1,5 +1,5 @@
 from typing import List, Dict
-
+from sklearn.feature_extraction.text import TfidfVectorizer
 import pandas as pd
 from langchain.tools import tool
 
@@ -662,11 +662,136 @@ def make_eda_tools(state):
             "path": path,
             "shape": state.df.shape
         }
+    @tool
+    def one_hot_encode_columns(column_names: list[str],
+                               drop_first: bool = False,
+                               dummy_na: bool = False) -> dict:
+        """Apply one-hot encoding to selected categorical columns.
 
+        Converts each unique category in the specified columns into
+        binary indicator features and replaces the original columns.
 
+        Args:
+            column_names: List of column names to encode.
+            drop_first: If True, drop the first category in each column
+                        to reduce multicollinearity.
+            dummy_na: If True, create a separate category for missing values.
+
+        Returns:
+            Dictionary containing:
+            - status: success or error state
+            - encoded_columns: columns that were encoded
+            - new_columns_created: generated one-hot feature names
+            - total_columns_after_encoding: total number of columns
+        """
+        if state.df is None:
+            return {
+                "status": "error",
+                "message": "DataFrame is empty"
+            }
+
+        df = state.df.copy()
+
+        missing_cols = [col for col in column_names if col not in df.columns]
+
+        if missing_cols:
+            return {
+                "status": "error",
+                "message": f"Columns not found: {missing_cols}"
+            }
+
+        encoded_df = pd.get_dummies(
+            df,
+            columns=column_names,
+            drop_first=drop_first,
+            dummy_na=dummy_na
+        )
+
+        new_columns = [
+            col for col in encoded_df.columns
+            if col not in df.columns or col not in column_names
+        ]
+
+        state.df = encoded_df
+
+        return {
+            "status": "ok",
+            "encoded_columns": column_names,
+            "new_columns_created": new_columns,
+            "total_columns_after_encoding": len(encoded_df.columns)
+        }
+
+    @tool
+    def tfidf_vectorize_column(input: dict) -> dict:
+        """Vectorize a text column using TF-IDF.
+
+        Converts a text column into numerical features suitable for ML models.
+
+        Args:
+            input: Dictionary containing:
+                - column: name of the text column to vectorize
+                - max_features: maximum number of features (default: 100)
+                - ngram_range: tuple like (1, 2) for unigrams and bigrams
+                - prefix: prefix for generated feature columns
+
+        Returns:
+            Dictionary with:
+            - status: success or error
+            - original_column: input column name
+            - created_features: list of generated feature names
+        """
+
+        df = state.df
+
+        column = input["column"]
+        max_features = input.get("max_features", 100)
+        ngram_range = tuple(input.get("ngram_range", (1, 2)))
+        prefix = input.get("prefix", column)
+
+        if df is None:
+            return {"status": "error", "message": "DataFrame is empty"}
+
+        if column not in df.columns:
+            return {"status": "error", "message": f"Column '{column}' not found"}
+
+        # ensure string
+        texts = df[column].fillna("").astype(str)
+
+        vectorizer = TfidfVectorizer(
+            max_features=max_features,
+            ngram_range=ngram_range,
+            stop_words="english"
+        )
+
+        X = vectorizer.fit_transform(texts)
+
+        feature_names = [
+            f"{prefix}_{name}" for name in vectorizer.get_feature_names_out()
+        ]
+
+        tfidf_df = pd.DataFrame(
+            X.toarray(),
+            columns=feature_names,
+            index=df.index
+        )
+
+        # drop original column
+        df = df.drop(columns=[column])
+
+        # concat features
+        df = pd.concat([df, tfidf_df], axis=1)
+
+        state.df = df
+
+        return {
+            "status": "ok",
+            "original_column": column,
+            "created_features": feature_names[:20],  # чтобы не раздувать ответ
+            "total_features": len(feature_names)
+        }
 
     return [drop_cols, analyze_missing, fill_missing, eda_summary, analyze_duplicates,
             drop_duplicates, analyze_outliers, handle_outliers, analyze_target_balance, apply_preprocessing_plan, generate_eda_report,
-            export_clean_dataset, columns_description]
+            export_clean_dataset, columns_description, one_hot_encode_columns, tfidf_vectorize_column]
 
 

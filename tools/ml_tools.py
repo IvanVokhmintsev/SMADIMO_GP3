@@ -1,4 +1,3 @@
-from functools import partial
 from typing import List
 
 from langchain.tools import tool
@@ -12,6 +11,7 @@ from sklearn.metrics import (
     recall_score,
     f1_score,
     roc_auc_score,
+    root_mean_squared_error
 )
 import os
 import joblib
@@ -28,7 +28,7 @@ from tools.ml_models import (
 metrics_dict = {
     "mae": mean_absolute_error,
     "mse": mean_squared_error,
-    "rmse": partial(mean_squared_error, squared=False),
+    "rmse": root_mean_squared_error,
     "r2": r2_score,
     "accuracy": accuracy_score,
     "precision": precision_score,
